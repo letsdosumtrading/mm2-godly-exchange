@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MM2 Godly Exchange — Case Files (Supabase edition)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0b0b0d;
+    --panel:#17171b;
+    --panel2:#1e1e23;
+    --ink:#f2f0ea;
+    --ink-dim:#a8a6a0;
+    --blood:#b31e2b;
+    --blood-dark:#7a1420;
+    --tag:#d9c77a;
+    --steel:#5b7a8c;
+    --green:#4a8f5c;
+    --border:#2a2a30;
+    --border-lt:#38383f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:
+      radial-gradient(ellipse at top, rgba(179,30,43,0.06), transparent 60%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+  }
+  h1,h2,h3,.display{
+    font-family:'Oswald', sans-serif;
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .app{max-width:1100px;margin:0 auto;padding:0 20px 60px;}
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:18px 20px;border-bottom:2px solid var(--border);
+    flex-wrap:wrap;gap:12px;
+    background:linear-gradient(180deg, rgba(179,30,43,0.05), transparent);
+  }
+  .brand{display:flex;align-items:center;gap:10px;}
+  .brand .mark{
+    width:34px;height:34px;border:2px solid var(--blood);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Oswald';font-weight:700;color:var(--blood);
+    transform:rotate(-3deg);font-size:16px;
+  }
+  .brand .title{font-weight:600;font-size:19px;letter-spacing:0.06em;}
+  .brand .subtitle{font-size:10.5px;color:var(--ink-dim);letter-spacing:0.15em;margin-top:-2px;}
+  .nav{display:flex;gap:4px;flex-wrap:wrap;}
+  .nav button{
+    background:transparent;border:1px solid transparent;color:var(--ink-dim);
+    font-family:'Oswald';text-transform:uppercase;letter-spacing:0.06em;font-size:13px;
+    padding:8px 14px;cursor:pointer;border-radius:2px;
+  }
+  .nav button:hover{color:var(--ink);border-color:var(--border-lt);}
+  .nav button.active{color:var(--ink);border-color:var(--blood);background:rgba(179,30,43,0.08);}
+  .nav .badge{background:var(--blood);color:var(--ink);font-size:10px;padding:1px 6px;border-radius:8px;margin-left:6px;}
+  .user-chip{display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--ink-dim);}
+  .user-chip b{color:var(--ink);}
+  .user-chip button{
+    background:none;border:1px solid var(--border-lt);color:var(--ink-dim);
+    font-family:'IBM Plex Mono';font-size:11.5px;padding:5px 10px;cursor:pointer;border-radius:2px;
+  }
+  .user-chip button:hover{border-color:var(--blood);color:var(--ink);}
+
+  /* ---------- Generic ---------- */
+  .section-title{font-size:22px;margin:28px 0 4px;}
+  .section-sub{color:var(--ink-dim);font-size:12.5px;margin-bottom:20px;}
+  .btn{
+    font-family:'Oswald';text-transform:uppercase;letter-spacing:0.05em;
+    background:var(--blood);color:#fff;border:none;padding:10px 18px;
+    cursor:pointer;border-radius:2px;font-size:13px;font-weight:500;
+  }
+  .btn:hover{background:var(--blood-dark);}
+  .btn.secondary{background:transparent;border:1px solid var(--border-lt);color:var(--ink);}
+  .btn.secondary:hover{border-color:var(--ink-dim);}
+  .btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11px;color:var(--ink-dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:5px;}
+  .field input, .field select{
+    width:100%;background:var(--panel2);border:1px solid var(--border-lt);color:var(--ink);
+    padding:10px 12px;font-family:'IBM Plex Mono';font-size:13.5px;border-radius:2px;
+  }
+  .field input:focus, .field select:focus{outline:none;border-color:var(--blood);}
+  .error-note{
+    color:var(--blood);font-size:12px;margin-top:8px;padding:8px 10px;
+    border-left:3px solid var(--blood);background:rgba(179,30,43,0.08);
+  }
+  .info-note{
+    color:var(--tag);font-size:12px;margin-top:8px;padding:8px 10px;
+    border-left:3px solid var(--tag);background:rgba(217,199,122,0.06);
+  }
+  .loading{color:var(--ink-dim);font-size:13px;padding:40px 0;text-align:center;}
+
+  /* ---------- Auth ---------- */
+  .auth-wrap{display:flex;justify-content:center;padding:60px 20px;}
+  .auth-card{
+    width:100%;max-width:380px;background:var(--panel);border:1px solid var(--border);
+    padding:30px;position:relative;
+  }
+  .auth-card::before{
+    content:'INTAKE FORM';position:absolute;top:-11px;left:20px;background:var(--bg);
+    padding:0 8px;font-family:'Oswald';font-size:10px;letter-spacing:0.15em;color:var(--tag);
+  }
+  .auth-tabs{display:flex;margin-bottom:22px;border-bottom:1px solid var(--border-lt);}
+  .auth-tabs button{
+    flex:1;background:none;border:none;color:var(--ink-dim);padding:10px 0;
+    font-family:'Oswald';text-transform:uppercase;letter-spacing:0.05em;font-size:13px;cursor:pointer;
+    border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .auth-tabs button.active{color:var(--ink);border-color:var(--blood);}
+
+  /* ---------- Catalog ---------- */
+  .catalog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px;margin-top:18px;}
+  .item-card{
+    background:var(--panel);border:1px solid var(--border);position:relative;
+    display:flex;flex-direction:column;
+  }
+  .item-media{
+    height:120px;display:flex;align-items:center;justify-content:center;font-size:52px;
+    background:
+      repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0 2px, transparent 2px 10px),
+      var(--panel2);
+    border-bottom:1px solid var(--border);position:relative;overflow:hidden;
+  }
+  .item-media img{width:100%;height:100%;object-fit:cover;}
+  .stock-tape{
+    position:absolute;top:8px;right:-6px;background:var(--tag);color:#1a1a1a;
+    font-family:'Oswald';font-size:10px;letter-spacing:0.08em;padding:3px 10px;
+    transform:rotate(4deg);font-weight:600;
+  }
+  .stock-tape.low{background:var(--blood);color:#fff;}
+  .stock-tape.none{background:#444;color:var(--ink-dim);}
+  .item-body{padding:14px;display:flex;flex-direction:column;gap:8px;flex:1;}
+  .item-name{font-family:'Oswald';font-size:15.5px;letter-spacing:0.02em;line-height:1.25;}
+  .item-price-row{display:flex;align-items:center;justify-content:space-between;margin-top:auto;}
+  .item-price{
+    font-family:'Oswald';color:var(--tag);font-size:16px;font-weight:600;
+    border:1px dashed var(--border-lt);padding:3px 8px;position:relative;
+  }
+  .item-price::before{
+    content:'';position:absolute;left:-4px;top:50%;transform:translateY(-50%);
+    width:6px;height:6px;border-radius:50%;background:var(--bg);border:1px solid var(--border-lt);
+  }
+  .qty-row{display:flex;align-items:center;gap:8px;}
+  .qty-row button{
+    width:26px;height:26px;background:var(--panel2);border:1px solid var(--border-lt);color:var(--ink);
+    cursor:pointer;font-size:14px;border-radius:2px;
+  }
+  .qty-row span{min-width:20px;text-align:center;font-size:13px;}
+  .add-btn{width:100%;margin-top:4px;}
+
+  /* ---------- Cart ---------- */
+  .cart-bar{
+    position:fixed;bottom:0;left:0;right:0;background:var(--panel);border-top:2px solid var(--blood);
+    padding:12px 20px;display:flex;align-items:center;justify-content:center;gap:20px;z-index:50;
+  }
+  .cart-bar .info{font-size:13px;color:var(--ink-dim);}
+  .cart-bar .info b{color:var(--ink);}
+  .modal-overlay{
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;
+    z-index:100;padding:20px;
+  }
+  .modal{background:var(--panel);border:1px solid var(--border);max-width:460px;width:100%;padding:26px;max-height:85vh;overflow-y:auto;}
+  .modal h3{margin-top:0;}
+  .cart-line{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-bottom:1px solid var(--border);}
+  .cart-line button{background:none;border:none;color:var(--blood);cursor:pointer;font-size:11px;}
+  .cart-total{display:flex;justify-content:space-between;font-family:'Oswald';font-size:17px;margin-top:14px;padding-top:12px;border-top:1px solid var(--border-lt);}
+  .modal-actions{display:flex;gap:10px;margin-top:18px;}
+
+  /* ---------- Orders / Stamp ---------- */
+  .order-card{
+    background:var(--panel);border:1px solid var(--border);padding:18px 20px;margin-bottom:16px;
+    display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;align-items:flex-start;
+  }
+  .order-left .case-no{font-family:'Oswald';font-size:20px;letter-spacing:0.03em;}
+  .order-left .meta{color:var(--ink-dim);font-size:11.5px;margin-top:2px;}
+  .order-items{margin-top:10px;font-size:12.5px;color:var(--ink-dim);}
+  .order-items div{padding:2px 0;}
+  .order-total{font-family:'Oswald';color:var(--tag);margin-top:8px;font-size:14px;}
+  .stamp{
+    font-family:'Oswald';font-weight:700;letter-spacing:0.12em;font-size:15px;
+    padding:8px 16px;border:3px double currentColor;transform:rotate(-6deg);
+    white-space:nowrap;opacity:0.9;
+  }
+  .stamp.PENDING{color:var(--tag);border-style:dashed;}
+  .stamp.PROCESSING{color:var(--steel);}
+  .stamp.FULFILLED{color:var(--green);}
+  .stamp.CANCELLED{color:var(--blood);}
+
+  /* ---------- Admin ---------- */
+  .admin-tabs{display:flex;gap:4px;margin:18px 0;border-bottom:1px solid var(--border-lt);}
+  .admin-tabs button{
+    background:none;border:none;color:var(--ink-dim);padding:8px 16px;font-family:'Oswald';
+    text-transform:uppercase;font-size:12.5px;letter-spacing:0.05em;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;
+  }
+  .admin-tabs button.active{color:var(--ink);border-color:var(--blood);}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;}
+  th{
+    text-align:left;font-family:'Oswald';font-size:11px;letter-spacing:0.08em;text-transform:uppercase;
+    color:var(--ink-dim);padding:8px 10px;border-bottom:1px solid var(--border-lt);
+  }
+  td{padding:9px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  .mini-btn{
+    background:var(--panel2);border:1px solid var(--border-lt);color:var(--ink);
+    padding:4px 9px;font-size:11px;cursor:pointer;border-radius:2px;margin-right:4px;
+  }
+  .mini-btn:hover{border-color:var(--blood);}
+  .mini-btn.danger:hover{border-color:var(--blood);color:var(--blood);}
+  .status-select{background:var(--panel2);border:1px solid var(--border-lt);color:var(--ink);padding:4px 6px;font-family:'IBM Plex Mono';font-size:11.5px;}
+  .admin-form{background:var(--panel);border:1px solid var(--border);padding:18px;margin-top:14px;}
+  .admin-form .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .empty-state{color:var(--ink-dim);font-size:13px;padding:40px 0;text-align:center;border:1px dashed var(--border-lt);}
+  @media(max-width:640px){
+    .admin-form .row{grid-template-columns:1fr;}
+    table{display:block;overflow-x:auto;white-space:nowrap;}
+  }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ============================================================
+// SUPABASE CONFIG — paste your own values here
+// ============================================================
+const SUPABASE_URL = 'https://sheuixzkqjljnwvammqv.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_bqByJN3etJgatYlBB0V5wA_AGmSqLFV';
+// ============================================================
+
+const CONFIGURED = SUPABASE_URL.startsWith('http') && SUPABASE_ANON_KEY.length > 20;
+const sb = CONFIGURED ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+let diagnostic = { checked:false, working:false, detail:'' };
+
+async function runStorageDiagnostic(){
+  diagnostic.checked = true;
+  if(!CONFIGURED){
+    diagnostic.working = false;
+    diagnostic.detail = 'Supabase URL/key are not set yet. Edit the top of the script and paste in your project URL and anon key.';
+    return;
+  }
+  try{
+    const { error } = await sb.from('catalog').select('id').limit(1);
+    if(error){
+      diagnostic.working = false;
+      diagnostic.detail = 'Connected to Supabase, but the query failed: ' + error.message + '. Make sure you ran the setup SQL script.';
+      return;
+    }
+    diagnostic.working = true;
+    diagnostic.detail = 'Connected to Supabase successfully.';
+  } catch(e){
+    diagnostic.working = false;
+    diagnostic.detail = 'Could not reach Supabase: ' + (e && e.message ? e.message : String(e));
+  }
+}
+
+function storageAvailable(){ return diagnostic.working; }
+
+async function sha256(str){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+const SEED_CATALOG = [
+  {name:'Chroma Lightbringer', price:850, stock:4, image:'', emoji:'🔪'},
+  {name:'Heavenly Halo', price:1200, stock:2, image:'', emoji:'😇'},
+  {name:'Eagle', price:600, stock:6, image:'', emoji:'🦅'},
+  {name:'Nightmare', price:950, stock:0, image:'', emoji:'💀'},
+  {name:'Slasher', price:400, stock:9, image:'', emoji:'🗡️'},
+  {name:'Icewing', price:1100, stock:3, image:'', emoji:'❄️'},
+];
+
+let state = {
+  user: null,
+  view: 'catalog',
+  authTab: 'login',
+  catalog: [],
+  cart: {},
+  myOrders: [],
+  allOrders: [],
+  allUsers: [],
+  adminTab: 'orders',
+  loading: true,
+  cartOpen: false,
+  authError: '',
+  editingItem: null,
+  reviews: [],
+  reviewEligible: false,
+  reviewDraftRating: 5,
+  reviewError: '',
+  wheelItems: [],
+  wheelPrice: 500,
+  spinning: false,
+  spinResult: null,
+  lastWheelOrderNo: null,
+};
+
+function render(){ App.render(); }
+
+async function loadCatalog(){
+  if(!storageAvailable()){ state.catalog = []; return; }
+  const { data, error } = await sb.from('catalog').select('*').order('id');
+  if(error){ console.error(error); state.catalog = []; return; }
+  if(data.length === 0){
+    const { data: inserted, error: insertErr } = await sb.from('catalog').insert(SEED_CATALOG).select();
+    state.catalog = insertErr ? [] : inserted;
+  } else {
+    state.catalog = data;
+  }
+}
+
+async function saveCatalogItem(item){
+  if(item.id){
+    const { error } = await sb.from('catalog').update({
+      name:item.name, price:item.price, stock:item.stock, image:item.image, emoji:item.emoji
+    }).eq('id', item.id);
+    if(error) console.error(error);
+  } else {
+    const { error } = await sb.from('catalog').insert({
+      name:item.name, price:item.price, stock:item.stock, image:item.image, emoji:item.emoji
+    });
+    if(error) console.error(error);
+  }
+}
+
+async function deleteCatalogItemDB(id){
+  const { error } = await sb.from('catalog').delete().eq('id', id);
+  if(error) console.error(error);
+}
+
+async function updateCatalogStock(id, stock){
+  const { error } = await sb.from('catalog').update({ stock }).eq('id', id);
+  if(error) console.error(error);
+}
+
+async function loadMyOrders(){
+  if(!state.user){ state.myOrders = []; return; }
+  const { data, error } = await sb.from('orders').select('*').eq('username', state.user.username).order('created_at', { ascending:false });
+  state.myOrders = error ? [] : data;
+}
+
+async function loadAllOrders(){
+  const { data, error } = await sb.from('orders').select('*').order('created_at', { ascending:false });
+  state.allOrders = error ? [] : data;
+}
+
+async function loadAllUsers(){
+  const { data, error } = await sb.from('app_users').select('username, is_admin').order('id');
+  state.allUsers = error ? [] : data;
+}
+
+async function registerUser(username, password){
+  username = username.trim();
+  if(!username || !password) return 'Enter a username and password.';
+  if(username.length < 3) return 'Username must be at least 3 characters.';
+  if(password.length < 4) return 'Password must be at least 4 characters.';
+
+  const { data: existing } = await sb.from('app_users').select('id').eq('username', username).maybeSingle();
+  if(existing) return 'That username is already on file.';
+
+  const { count } = await sb.from('app_users').select('id', { count:'exact', head:true });
+  const isAdmin = (count || 0) === 0;
+
+  const passwordHash = await sha256(password + ':' + username.toLowerCase());
+  const { error } = await sb.from('app_users').insert({ username, password_hash: passwordHash, is_admin: isAdmin });
+  if(error) return 'Could not create account: ' + error.message;
+
+  state.user = { username, isAdmin };
+  return null;
+}
+
+async function loginUser(username, password){
+  username = username.trim();
+  if(!username || !password) return 'Enter a username and password.';
+
+  const { data: record, error } = await sb.from('app_users').select('*').eq('username', username).maybeSingle();
+  if(error || !record) return 'No case file found for that username.';
+
+  const passwordHash = await sha256(password + ':' + username.toLowerCase());
+  if(passwordHash !== record.password_hash) return 'Incorrect password.';
+
+  state.user = { username: record.username, isAdmin: !!record.is_admin };
+  return null;
+}
+
+function logout(){
+  state.user = null;
+  state.cart = {};
+  state.view = 'catalog';
+  render();
+}
+
+async function placeOrder(){
+  const items = Object.entries(state.cart)
+    .filter(([id,qty])=>qty>0)
+    .map(([id,qty])=>{
+      const item = state.catalog.find(i=>String(i.id)===String(id));
+      return item ? {id:item.id, name:item.name, price:item.price, qty} : null;
+    }).filter(Boolean);
+  if(items.length===0) return;
+
+  for(const line of items){
+    const catItem = state.catalog.find(i=>i.id===line.id);
+    if(!catItem || catItem.stock < line.qty){
+      alert('Not enough stock for '+line.name+'. Refresh and try again.');
+      return;
+    }
+  }
+
+  const total = items.reduce((s,i)=>s+i.price*i.qty, 0);
+  const { error } = await sb.from('orders').insert({
+    username: state.user.username, items, total, status:'PENDING'
+  });
+  if(error){ alert('Could not file order: ' + error.message); return; }
+
+  for(const line of items){
+    const catItem = state.catalog.find(i=>i.id===line.id);
+    if(catItem){
+      catItem.stock -= line.qty;
+      await updateCatalogStock(catItem.id, catItem.stock);
+    }
+  }
+
+  state.cart = {};
+  state.cartOpen = false;
+  await loadMyOrders();
+  state.view = 'orders';
+  render();
+}
+
+async function updateOrderStatus(orderId, status){
+  const { error } = await sb.from('orders').update({ status }).eq('id', orderId);
+  if(error) console.error(error);
+  await loadAllOrders();
+  render();
+}
+
+async function toggleAdmin(username, makeAdmin){
+  const { error } = await sb.from('app_users').update({ is_admin: makeAdmin }).eq('username', username);
+  if(error) console.error(error);
+  await loadAllUsers();
+  render();
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function loadReviews(){
+  const { data, error } = await sb.from('reviews').select('*').order('created_at', { ascending:false });
+  state.reviews = error ? [] : data;
+}
+
+async function submitReview(rating, comment){
+  if(!comment.trim()) return 'Write a short comment first.';
+  const { error } = await sb.from('reviews').insert({ username: state.user.username, rating, comment: comment.trim() });
+  if(error) return 'Could not submit review: ' + error.message;
+  await loadReviews();
+  return null;
+}
+
+async function checkReviewEligibility(){
+  const { count } = await sb.from('orders').select('id', { count:'exact', head:true })
+    .eq('username', state.user.username).eq('status', 'FULFILLED');
+  state.reviewEligible = (count || 0) > 0;
+}
+
+async function loadWheelConfig(){
+  const { data: priceRow } = await sb.from('settings').select('value').eq('key','wheel_price').maybeSingle();
+  state.wheelPrice = priceRow ? parseInt(priceRow.value, 10) : 500;
+  const { data: items } = await sb.from('catalog').select('*').eq('in_wheel', true).gt('stock', 0).order('wheel_order', { ascending:true });
+  state.wheelItems = items || [];
+}
+
+async function loadWheelConfigAdmin(){
+  const { data: priceRow } = await sb.from('settings').select('value').eq('key','wheel_price').maybeSingle();
+  state.wheelPrice = priceRow ? parseInt(priceRow.value, 10) : 500;
+}
+
+async function saveWheelPrice(price){
+  await sb.from('settings').update({ value:String(price) }).eq('key','wheel_price');
+  state.wheelPrice = price;
+}
+
+async function toggleWheelItem(id, inWheel){
+  if(inWheel){
+    const maxOrder = state.catalog.reduce((m,i)=> (i.in_wheel && i.wheel_order!=null && i.wheel_order>m) ? i.wheel_order : m, 0);
+    const wheel_order = maxOrder + 1;
+    await sb.from('catalog').update({ in_wheel:true, wheel_order }).eq('id', id);
+    const item = state.catalog.find(i=>i.id===id);
+    if(item){ item.in_wheel = true; item.wheel_order = wheel_order; }
+  } else {
+    await sb.from('catalog').update({ in_wheel:false, wheel_order:null }).eq('id', id);
+    const item = state.catalog.find(i=>i.id===id);
+    if(item){ item.in_wheel = false; item.wheel_order = null; }
+  }
+}
+
+async function moveWheelItem(id, direction){
+  const ranked = state.catalog.filter(i=>i.in_wheel).sort((a,b)=>(a.wheel_order||0)-(b.wheel_order||0));
+  const idx = ranked.findIndex(i=>i.id===id);
+  const swapIdx = direction==='up' ? idx-1 : idx+1;
+  if(idx<0 || swapIdx<0 || swapIdx>=ranked.length) return;
+  const a = ranked[idx], b = ranked[swapIdx];
+  const aOrder = a.wheel_order, bOrder = b.wheel_order;
+  await sb.from('catalog').update({ wheel_order: bOrder }).eq('id', a.id);
+  await sb.from('catalog').update({ wheel_order: aOrder }).eq('id', b.id);
+  a.wheel_order = bOrder; b.wheel_order = aOrder;
+}
+
+async function placeWheelOrder(item, pricePaid){
+  const { error } = await sb.from('orders').insert({
+    username: state.user.username,
+    items: [{id:item.id, name:item.name + ' (Wheel)', price:pricePaid, qty:1}],
+    total: pricePaid,
+    status: 'PENDING'
+  });
+  if(error){ alert('Could not file wheel order: ' + error.message); return; }
+  await updateCatalogStock(item.id, item.stock - 1);
+  item.stock -= 1;
+  await loadMyOrders();
+}
+
+function orderNo(id){ return String(id).padStart(4,'0'); }
+const App = {
+  root: document.getElementById('app'),
+
+  render(){
+    if(state.loading){
+      this.root.innerHTML = `<div class="loading">Pulling the case files…</div>`;
+      return;
+    }
+    let body = '';
+    if(!storageAvailable()){
+      body += `<div class="error-note" style="margin:16px 0;">
+        <b>Storage diagnostic:</b> ${esc(diagnostic.detail || 'Not yet checked.')}<br>
+        Accounts, orders, and catalog changes will reset when this page closes until this is resolved.
+      </div>`;
+    }
+    if(!state.user){
+      body += this.renderAuth();
+    } else if(state.view === 'catalog'){
+      body += this.renderTopbar() + this.renderCatalog() + this.renderCartBar();
+    } else if(state.view === 'orders'){
+      body += this.renderTopbar() + this.renderOrders();
+    } else if(state.view === 'reviews'){
+      body += this.renderTopbar() + this.renderReviews();
+    } else if(state.view === 'wheel'){
+      body += this.renderTopbar() + this.renderWheel();
+    } else if(state.view === 'admin'){
+      body += this.renderTopbar() + this.renderAdmin();
+    }
+    this.root.innerHTML = `<div class="app">${body}</div>` + (state.cartOpen ? this.renderCartModal() : '');
+    this.attach();
+  },
+
+  renderTopbar(){
+    const cartCount = Object.values(state.cart).reduce((a,b)=>a+b,0);
+    return `
+    <div class="topbar">
+      <div class="brand">
+        <div class="mark">MM2</div>
+        <div>
+          <div class="title">Godly Exchange</div>
+          <div class="subtitle">CASE FILES DIVISION</div>
+        </div>
+      </div>
+      <div class="nav">
+        <button data-nav="catalog" class="${state.view==='catalog'?'active':''}">Catalog</button>
+        <button data-nav="orders" class="${state.view==='orders'?'active':''}">My Orders</button>
+        <button data-nav="reviews" class="${state.view==='reviews'?'active':''}">Reviews</button>
+        <button data-nav="wheel" class="${state.view==='wheel'?'active':''}">Mystery Wheel</button>
+        ${state.user.isAdmin ? `<button data-nav="admin" class="${state.view==='admin'?'active':''}">Admin</button>` : ''}
+        ${state.view==='catalog' && cartCount>0 ? `<button data-open-cart="1">Case (<span class="badge">${cartCount}</span>)</button>` : ''}
+      </div>
+      <div class="user-chip">
+        <span>Investigator: <b>${esc(state.user.username)}</b>${state.user.isAdmin ? ' · ADMIN' : ''}</span>
+        <button data-logout="1">Log out</button>
+      </div>
+    </div>`;
+  },
+
+  renderAuth(){
+    return `
+    <div class="auth-wrap">
+      <div class="auth-card">
+        <div class="auth-tabs">
+          <button data-authtab="login" class="${state.authTab==='login'?'active':''}">Log In</button>
+          <button data-authtab="register" class="${state.authTab==='register'?'active':''}">Register</button>
+        </div>
+        <form id="auth-form">
+          <div class="field">
+            <label>Username</label>
+            <input type="text" id="auth-username" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="auth-password" autocomplete="${state.authTab==='login'?'current-password':'new-password'}" required>
+          </div>
+          <button class="btn" type="submit" style="width:100%">${state.authTab==='login'?'Log In':'Create Account'}</button>
+          ${state.authError ? `<div class="error-note">${esc(state.authError)}</div>` : ''}
+          ${state.authTab==='register' ? `<div class="info-note">First account registered on this exchange becomes the admin automatically.</div>` : ''}
+        </form>
+      </div>
+    </div>`;
+  },
+
+  renderCatalog(){
+    return `
+    <h2 class="section-title">Item Catalog</h2>
+    <div class="section-sub">Browse recovered Godlys. Add items to your case, then file your order.</div>
+    <div class="catalog-grid">
+      ${state.catalog.map(item=>{
+        const qty = state.cart[item.id] || 0;
+        const stockLabel = item.stock === 0 ? 'OUT OF STOCK' : `IN STOCK: ${item.stock}`;
+        const stockClass = item.stock === 0 ? 'none' : (item.stock <= 2 ? 'low' : '');
+        return `
+        <div class="item-card">
+          <div class="item-media">
+            ${item.image ? `<img src="${esc(item.image)}" alt="${esc(item.name)}">` : `<span>${item.emoji || '🔪'}</span>`}
+            <div class="stock-tape ${stockClass}">${stockLabel}</div>
+          </div>
+          <div class="item-body">
+            <div class="item-name">${esc(item.name)}</div>
+            <div class="item-price-row">
+              <div class="item-price">$${item.price}</div>
+            </div>
+            <div class="qty-row">
+              <button data-qty-dec="${item.id}" ${qty<=0?'disabled':''}>−</button>
+              <span>${qty}</span>
+              <button data-qty-inc="${item.id}" ${qty>=item.stock?'disabled':''}>+</button>
+            </div>
+            <button class="btn add-btn" data-add="${item.id}" ${item.stock<=qty?'disabled':''}>Add to Case</button>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div style="height:70px"></div>
+    `;
+  },
+
+  renderCartBar(){
+    const items = Object.entries(state.cart).filter(([id,qty])=>qty>0);
+    if(items.length===0) return '';
+    const total = items.reduce((s,[id,qty])=>{
+      const item = state.catalog.find(i=>i.id===id);
+      return s + (item ? item.price*qty : 0);
+    }, 0);
+    return `
+    <div class="cart-bar">
+      <div class="info"><b>${items.length}</b> item type(s) · total <b>$${total}</b></div>
+      <button class="btn" data-open-cart="1">Review Case</button>
+    </div>`;
+  },
+
+  renderCartModal(){
+    const items = Object.entries(state.cart).filter(([id,qty])=>qty>0).map(([id,qty])=>{
+      const item = state.catalog.find(i=>i.id===id);
+      return item ? {...item, qty} : null;
+    }).filter(Boolean);
+    const total = items.reduce((s,i)=>s+i.price*i.qty,0);
+    return `
+    <div class="modal-overlay" data-close-overlay="1">
+      <div class="modal" data-stop="1">
+        <h3>Case Contents</h3>
+        ${items.length===0 ? `<div class="empty-state">Your case is empty.</div>` : items.map(i=>`
+          <div class="cart-line">
+            <span>${esc(i.name)} × ${i.qty}</span>
+            <span>$${i.price*i.qty} <button data-remove="${i.id}">remove</button></span>
+          </div>`).join('')}
+        ${items.length>0 ? `<div class="cart-total"><span>Total</span><span>$${total}</span></div>` : ''}
+        <div class="modal-actions">
+          <button class="btn secondary" data-close-modal="1" style="flex:1">Keep Browsing</button>
+          ${items.length>0 ? `<button class="btn" data-file-order="1" style="flex:1">File Order</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  },
+
+  renderOrders(){
+    if(state.myOrders.length===0){
+      return `
+      <h2 class="section-title">My Orders</h2>
+      <div class="section-sub">Every order you file gets a case number and a status stamp.</div>
+      <div class="empty-state">No cases opened yet. Head to the Catalog to file your first order.</div>`;
+    }
+    return `
+    <h2 class="section-title">My Orders</h2>
+    <div class="section-sub">Every order you file gets a case number and a status stamp.</div>
+    ${state.myOrders.map(o=>`
+      <div class="order-card">
+        <div class="order-left">
+          <div class="case-no">Case No. ${orderNo(o.id)}</div>
+          <div class="meta">Filed ${new Date(o.created_at).toLocaleString()}</div>
+          <div class="order-items">
+            ${o.items.map(i=>`<div>${esc(i.name)} × ${i.qty} — $${i.price*i.qty}</div>`).join('')}
+          </div>
+          <div class="order-total">Total: $${o.total}</div>
+        </div>
+        <div class="stamp ${o.status}">${o.status}</div>
+      </div>`).join('')}
+    `;
+  },
+
+  renderReviews(){
+    const stars = n => '★'.repeat(n) + '☆'.repeat(5-n);
+    return `
+    <h2 class="section-title">Witness Statements</h2>
+    <div class="section-sub">Reviews from investigators whose cases have been fulfilled.</div>
+    ${state.reviewEligible ? `
+      <div class="admin-form" style="margin-bottom:24px;">
+        <h3 style="margin-top:0">Leave a Statement</h3>
+        <div class="field">
+          <label>Rating</label>
+          <div id="star-picker" style="font-size:24px;letter-spacing:4px;cursor:pointer;color:var(--tag);">
+            ${[1,2,3,4,5].map(n=>`<span data-star="${n}" style="opacity:${n<=state.reviewDraftRating?'1':'0.3'}">★</span>`).join('')}
+          </div>
+        </div>
+        <div class="field">
+          <label>Comment</label>
+          <textarea id="review-comment" rows="3" style="width:100%;background:var(--panel2);border:1px solid var(--border-lt);color:var(--ink);padding:10px 12px;font-family:'IBM Plex Mono';font-size:13.5px;border-radius:2px;" placeholder="How was your trade experience?"></textarea>
+        </div>
+        ${state.reviewError ? `<div class="error-note">${esc(state.reviewError)}</div>` : ''}
+        <button class="btn" data-submit-review="1" style="margin-top:10px;">File Statement</button>
+      </div>
+    ` : `<div class="info-note" style="margin-bottom:20px;">Only investigators with at least one fulfilled order can leave a statement.</div>`}
+    ${state.reviews.length===0 ? `<div class="empty-state">No statements filed yet.</div>` : state.reviews.map(r=>`
+      <div class="order-card">
+        <div class="order-left">
+          <div class="case-no" style="font-size:16px;">${esc(r.username)}</div>
+          <div class="meta">${new Date(r.created_at).toLocaleString()}</div>
+          <div style="color:var(--tag);font-size:18px;margin-top:6px;">${stars(r.rating)}</div>
+          <div style="margin-top:8px;font-size:13px;color:var(--ink-dim);">${esc(r.comment)}</div>
+        </div>
+      </div>`).join('')}
+    `;
+  },
+
+  renderWheel(){
+    if(state.wheelItems.length === 0){
+      return `
+      <h2 class="section-title">Mystery Wheel</h2>
+      <div class="section-sub">Pay a flat fee, spin, and take home a Godly.</div>
+      <div class="empty-state">No items are configured for the wheel right now. Check back soon.</div>`;
+    }
+    return `
+    <h2 class="section-title">Mystery Wheel</h2>
+    <div class="section-sub">Pay <b style="color:var(--tag)">$${state.wheelPrice}</b> to spin. Whatever the wheel lands on is yours.</div>
+    <div style="position:relative;max-width:560px;margin:20px auto;">
+      <div style="position:absolute;left:50%;top:-4px;transform:translateX(-50%);width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:14px solid var(--blood);z-index:5;"></div>
+      <div id="wheel-viewport" style="overflow:hidden;border:2px solid var(--border);background:var(--panel);height:150px;position:relative;">
+        <div id="wheel-reel" style="display:flex;position:absolute;left:0;top:0;height:100%;will-change:transform;">
+          ${state.wheelItems.map(item=>this.wheelCard(item)).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn" id="spin-btn" data-spin="1" ${state.spinning?'disabled':''}>${state.spinning ? 'Spinning…' : 'Spin the Wheel'}</button>
+    </div>
+    ${state.spinResult ? `
+      <div class="order-card" style="max-width:400px;margin:24px auto 0;justify-content:center;">
+        <div class="order-left" style="text-align:center;">
+          <div class="meta">RESULT</div>
+          <div class="case-no">${esc(state.spinResult.name)}</div>
+          <div class="order-total">Filed to your orders as Case No. ${state.lastWheelOrderNo ? orderNo(state.lastWheelOrderNo) : '—'}</div>
+        </div>
+      </div>` : ''}
+    `;
+  },
+
+  wheelCard(item){
+    return `
+    <div style="flex:0 0 140px;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-right:1px solid var(--border);background:var(--panel2);">
+      <div style="font-size:36px;">${item.image ? `<img src="${esc(item.image)}" style="width:48px;height:48px;object-fit:cover;">` : (item.emoji||'🔪')}</div>
+      <div style="font-family:'Oswald';font-size:12px;margin-top:6px;text-align:center;padding:0 6px;">${esc(item.name)}</div>
+      <div style="font-family:'Oswald';color:var(--tag);font-size:12px;">$${item.price}</div>
+    </div>`;
+  },
+
+  renderAdmin(){
+    return `
+    <h2 class="section-title">Admin</h2>
+    <div class="section-sub">Manage the catalog, review orders, and manage staff access.</div>
+    <div class="admin-tabs">
+      <button data-admintab="orders" class="${state.adminTab==='orders'?'active':''}">Orders</button>
+      <button data-admintab="catalog" class="${state.adminTab==='catalog'?'active':''}">Catalog</button>
+      <button data-admintab="staff" class="${state.adminTab==='staff'?'active':''}">Staff</button>
+    </div>
+    ${state.adminTab==='orders' ? this.renderAdminOrders() : ''}
+    ${state.adminTab==='catalog' ? this.renderAdminCatalog() : ''}
+    ${state.adminTab==='staff' ? this.renderAdminStaff() : ''}
+    `;
+  },
+
+  renderAdminOrders(){
+    if(state.allOrders.length===0) return `<div class="empty-state">No orders filed yet.</div>`;
+    return `
+    <table>
+      <thead><tr><th>Case</th><th>Investigator</th><th>Items</th><th>Total</th><th>Status</th></tr></thead>
+      <tbody>
+        ${state.allOrders.map(o=>`
+        <tr>
+          <td>${orderNo(o.id)}</td>
+          <td>${esc(o.username)}</td>
+          <td>${o.items.map(i=>esc(i.name)+' ×'+i.qty).join(', ')}</td>
+          <td>$${o.total}</td>
+          <td>
+            <select class="status-select" data-status-order="${o.id}">
+              ${['PENDING','PROCESSING','FULFILLED','CANCELLED'].map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('')}
+            </select>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  },
+
+  renderAdminCatalog(){
+    const editing = state.editingItem;
+    const editingItem = editing && editing!=='new' ? state.catalog.find(i=>i.id===editing) : null;
+    const ranked = state.catalog.filter(i=>i.in_wheel).sort((a,b)=>(a.wheel_order||0)-(b.wheel_order||0));
+    return `
+    <div class="admin-form" style="margin-bottom:18px;">
+      <h3 style="margin-top:0">Mystery Wheel Settings</h3>
+      <div class="field" style="max-width:220px;">
+        <label>Spin Price (USD)</label>
+        <input id="wheel-price-input" type="number" min="0" value="${state.wheelPrice}">
+      </div>
+      <button class="btn secondary" data-save-wheel-price="1">Save Price</button>
+
+      <div class="section-sub" style="margin-top:16px;margin-bottom:6px;">
+        Wheel ranking — highest value at top, lowest at bottom. Each spin randomly samples a
+        few items from this list, but always awards whichever one lands lowest (bottom-most) among those picked.
+      </div>
+      ${ranked.length===0 ? `<div class="empty-state" style="padding:20px;">No items on the wheel yet. Add some using "In Wheel" below.</div>` : `
+      <table style="margin-top:6px;">
+        <thead><tr><th>Rank</th><th>Item</th><th>Price</th><th></th></tr></thead>
+        <tbody>
+          ${ranked.map((i,idx)=>`
+          <tr>
+            <td style="color:var(--ink-dim);">${idx+1}</td>
+            <td>${i.emoji||'🔪'} ${esc(i.name)}</td>
+            <td>$${i.price}</td>
+            <td>
+              <button class="mini-btn" data-move-wheel="${i.id}" data-dir="up" ${idx===0?'disabled':''}>▲</button>
+              <button class="mini-btn" data-move-wheel="${i.id}" data-dir="down" ${idx===ranked.length-1?'disabled':''}>▼</button>
+              <button class="mini-btn danger" data-toggle-wheel="${i.id}">Remove</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>`}
+    </div>
+    <div class="section-sub" style="margin-bottom:6px;">Full catalog — toggle "In Wheel" to add an item to the ranking above.</div>
+    <table>
+      <thead><tr><th>Item</th><th>Price</th><th>Stock</th><th>In Wheel</th><th></th></tr></thead>
+      <tbody>
+        ${state.catalog.map(i=>`
+        <tr>
+          <td>${i.emoji||'🔪'} ${esc(i.name)}</td>
+          <td>$${i.price}</td>
+          <td>${i.stock}</td>
+          <td><button class="mini-btn ${i.in_wheel?'':'secondary'}" data-toggle-wheel="${i.id}">${i.in_wheel?'Yes — remove':'No — add'}</button></td>
+          <td>
+            <button class="mini-btn" data-edit-item="${i.id}">Edit</button>
+            <button class="mini-btn danger" data-delete-item="${i.id}">Delete</button>
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <button class="btn secondary" style="margin-top:14px" data-new-item="1">+ Add Item</button>
+    ${editing ? `
+    <div class="admin-form">
+      <h3 style="margin-top:0">${editing==='new' ? 'New Item' : 'Edit Item'}</h3>
+      <div class="row">
+        <div class="field"><label>Name</label><input id="f-name" value="${editingItem?esc(editingItem.name):''}"></div>
+        <div class="field"><label>Emoji / icon</label><input id="f-emoji" value="${editingItem?esc(editingItem.emoji||''):''}" placeholder="🔪"></div>
+        <div class="field"><label>Price (USD)</label><input id="f-price" type="number" min="0" value="${editingItem?editingItem.price:''}"></div>
+        <div class="field"><label>Stock</label><input id="f-stock" type="number" min="0" value="${editingItem?editingItem.stock:''}"></div>
+      </div>
+      <div class="field"><label>Image URL (optional, overrides icon)</label><input id="f-image" value="${editingItem?esc(editingItem.image||''):''}" placeholder="https://..."></div>
+      <div class="modal-actions">
+        <button class="btn secondary" data-cancel-edit="1">Cancel</button>
+        <button class="btn" data-save-item="1">Save Item</button>
+      </div>
+    </div>` : ''}
+    `;
+  },
+
+  renderAdminStaff(){
+    return `
+    <table>
+      <thead><tr><th>Username</th><th>Role</th><th></th></tr></thead>
+      <tbody>
+        ${state.allUsers.map(u=>`
+        <tr>
+          <td>${esc(u.username)}</td>
+          <td>${u.isAdmin ? 'ADMIN' : 'MEMBER'}</td>
+          <td>
+            ${u.username===state.user.username ? '<span style="color:var(--ink-dim)">you</span>' :
+              (u.isAdmin ? `<button class="mini-btn danger" data-demote="${esc(u.username)}">Remove Admin</button>`
+                          : `<button class="mini-btn" data-promote="${esc(u.username)}">Make Admin</button>`)}
+          </td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+  },
+
+  attach(){
+    const $ = sel => this.root.querySelector(sel);
+    const $$ = sel => Array.from(this.root.querySelectorAll(sel));
+
+    // auth
+    const authForm = $('#auth-form');
+    if(authForm){
+      authForm.addEventListener('submit', async e=>{
+        e.preventDefault();
+        const username = $('#auth-username').value;
+        const password = $('#auth-password').value;
+        state.authError = '';
+        let err;
+        if(state.authTab==='login') err = await loginUser(username, password);
+        else err = await registerUser(username, password);
+        if(err){ state.authError = err; render(); return; }
+        state.loading = true; render();
+        await Promise.all([loadCatalog(), loadMyOrders()]);
+        if(state.user.isAdmin){ await Promise.all([loadAllOrders(), loadAllUsers()]); }
+        state.loading = false;
+        render();
+      });
+    }
+    $$('[data-authtab]').forEach(b=>b.addEventListener('click', ()=>{
+      state.authTab = b.dataset.authtab; state.authError=''; render();
+    }));
+
+    // nav
+    $$('[data-nav]').forEach(b=>b.addEventListener('click', async ()=>{
+      state.view = b.dataset.nav;
+      state.spinResult = null;
+      if(state.view==='orders') await loadMyOrders();
+      if(state.view==='reviews'){ await Promise.all([loadReviews(), checkReviewEligibility()]); }
+      if(state.view==='wheel'){ await loadWheelConfig(); }
+      if(state.view==='admin'){ await Promise.all([loadAllOrders(), loadAllUsers(), loadWheelConfigAdmin()]); }
+      render();
+    }));
+    const logoutBtn = $('[data-logout]');
+    if(logoutBtn) logoutBtn.addEventListener('click', logout);
+
+    // cart
+    $$('[data-open-cart]').forEach(b=>b.addEventListener('click', ()=>{ state.cartOpen=true; render(); }));
+    const overlay = $('[data-close-overlay]');
+    if(overlay) overlay.addEventListener('click', e=>{ if(e.target===overlay){ state.cartOpen=false; render(); } });
+    const stopEl = $('[data-stop]');
+    if(stopEl) stopEl.addEventListener('click', e=>e.stopPropagation());
+    const closeModalBtn = $('[data-close-modal]');
+    if(closeModalBtn) closeModalBtn.addEventListener('click', ()=>{ state.cartOpen=false; render(); });
+    $$('[data-remove]').forEach(b=>b.addEventListener('click', ()=>{ delete state.cart[b.dataset.remove]; render(); }));
+    const fileBtn = $('[data-file-order]');
+    if(fileBtn) fileBtn.addEventListener('click', async ()=>{ fileBtn.disabled=true; fileBtn.textContent='Filing…'; await placeOrder(); });
+
+    $$('[data-qty-inc]').forEach(b=>b.addEventListener('click', ()=>{
+      const id=b.dataset.qtyInc; const item=state.catalog.find(i=>String(i.id)===String(id));
+      const cur = state.cart[id]||0;
+      if(item && cur < item.stock){ state.cart[id]=cur+1; render(); }
+    }));
+    $$('[data-qty-dec]').forEach(b=>b.addEventListener('click', ()=>{
+      const id=b.dataset.qtyDec; const cur=state.cart[id]||0;
+      if(cur>0){ state.cart[id]=cur-1; render(); }
+    }));
+    $$('[data-add]').forEach(b=>b.addEventListener('click', ()=>{
+      const id=b.dataset.add; const item=state.catalog.find(i=>String(i.id)===String(id));
+      const cur = state.cart[id]||0;
+      if(item && cur < item.stock){ state.cart[id]=cur+1; render(); } else if(cur===0 && item){ state.cart[id]=1; render(); }
+    }));
+
+    // admin orders
+    $$('[data-status-order]').forEach(sel=>sel.addEventListener('change', ()=>{
+      updateOrderStatus(sel.dataset.statusOrder, sel.value);
+    }));
+
+    // admin catalog
+    const newBtn = $('[data-new-item]');
+    if(newBtn) newBtn.addEventListener('click', ()=>{ state.editingItem='new'; render(); });
+    $$('[data-edit-item]').forEach(b=>b.addEventListener('click', ()=>{ state.editingItem=Number(b.dataset.editItem); render(); }));
+    $$('[data-delete-item]').forEach(b=>b.addEventListener('click', async ()=>{
+      if(!confirm('Delete this item from the catalog?')) return;
+      const id = Number(b.dataset.deleteItem);
+      await deleteCatalogItemDB(id);
+      state.catalog = state.catalog.filter(i=>i.id!==id);
+      render();
+    }));
+    const cancelEdit = $('[data-cancel-edit]');
+    if(cancelEdit) cancelEdit.addEventListener('click', ()=>{ state.editingItem=null; render(); });
+    const saveItemBtn = $('[data-save-item]');
+    if(saveItemBtn) saveItemBtn.addEventListener('click', async ()=>{
+      const name = $('#f-name').value.trim();
+      const emoji = $('#f-emoji').value.trim();
+      const price = parseInt($('#f-price').value,10);
+      const stock = parseInt($('#f-stock').value,10);
+      const image = $('#f-image').value.trim();
+      if(!name || isNaN(price) || isNaN(stock)){ alert('Fill in name, price, and stock.'); return; }
+      if(state.editingItem==='new'){
+        await saveCatalogItem({ name, price, stock, image, emoji });
+      } else {
+        const item = state.catalog.find(i=>i.id===state.editingItem);
+        if(item){ item.name=name; item.price=price; item.stock=stock; item.image=image; item.emoji=emoji; await saveCatalogItem(item); }
+      }
+      state.editingItem=null;
+      await loadCatalog();
+      render();
+    });
+
+    // admin tabs
+    $$('[data-admintab]').forEach(b=>b.addEventListener('click', ()=>{ state.adminTab=b.dataset.admintab; state.editingItem=null; render(); }));
+
+    // wheel admin controls
+    const saveWheelPriceBtn = $('[data-save-wheel-price]');
+    if(saveWheelPriceBtn) saveWheelPriceBtn.addEventListener('click', async ()=>{
+      const price = parseInt($('#wheel-price-input').value, 10);
+      if(isNaN(price) || price < 0){ alert('Enter a valid price.'); return; }
+      await saveWheelPrice(price);
+      render();
+    });
+    $$('[data-toggle-wheel]').forEach(b=>b.addEventListener('click', async ()=>{
+      const id = Number(b.dataset.toggleWheel);
+      const item = state.catalog.find(i=>i.id===id);
+      if(!item) return;
+      await toggleWheelItem(id, !item.in_wheel);
+      render();
+    }));
+    $$('[data-move-wheel]').forEach(b=>b.addEventListener('click', async ()=>{
+      const id = Number(b.dataset.moveWheel);
+      await moveWheelItem(id, b.dataset.dir);
+      render();
+    }));
+
+    // staff
+    $$('[data-promote]').forEach(b=>b.addEventListener('click', ()=>toggleAdmin(b.dataset.promote, true)));
+    $$('[data-demote]').forEach(b=>b.addEventListener('click', ()=>toggleAdmin(b.dataset.demote, false)));
+
+    // reviews
+    $$('[data-star]').forEach(s=>s.addEventListener('click', ()=>{
+      state.reviewDraftRating = parseInt(s.dataset.star,10); render();
+    }));
+    const submitReviewBtn = $('[data-submit-review]');
+    if(submitReviewBtn) submitReviewBtn.addEventListener('click', async ()=>{
+      const comment = $('#review-comment').value;
+      submitReviewBtn.disabled = true;
+      const err = await submitReview(state.reviewDraftRating, comment);
+      state.reviewError = err || '';
+      state.reviewDraftRating = 5;
+      render();
+    });
+
+    // wheel spin
+    const spinBtn = $('#spin-btn');
+    if(spinBtn) spinBtn.addEventListener('click', async ()=>{
+      if(state.spinning || state.wheelItems.length===0) return;
+      state.spinning = true;
+      state.spinResult = null;
+      spinBtn.disabled = true;
+      spinBtn.textContent = 'Spinning…';
+
+      const pool = state.wheelItems; // already ordered rank 1 (highest) -> lowest
+      const sampleSize = Math.min(6, pool.length);
+      const shuffledIdx = pool.map((_,i)=>i).sort(()=>Math.random()-0.5).slice(0, sampleSize).sort((a,b)=>a-b);
+      const sample = shuffledIdx.map(i=>pool[i]);
+      const winner = sample[sample.length-1]; // always the lowest-ranked item among the ones picked
+      const cardWidth = 140;
+      const reel = $('#wheel-reel');
+      const viewport = $('#wheel-viewport');
+
+      // build a long strip ending on the winner so the spin has something to scroll through
+      const REPEATS = 18;
+      let strip = [];
+      for(let r=0;r<REPEATS;r++){
+        const shuffled = [...sample].sort(()=>Math.random()-0.5);
+        strip = strip.concat(shuffled);
+      }
+      const winnerIndex = strip.length - Math.floor(sample.length/2) - 1;
+      strip[winnerIndex] = winner;
+      reel.innerHTML = strip.map(item=>App.wheelCard(item)).join('');
+      reel.style.transition = 'none';
+      reel.style.transform = 'translateX(0px)';
+      reel.offsetHeight; // force reflow
+
+      const viewportWidth = viewport.clientWidth;
+      const targetX = -(winnerIndex*cardWidth - viewportWidth/2 + cardWidth/2);
+
+      requestAnimationFrame(()=>{
+        reel.style.transition = 'transform 4.2s cubic-bezier(0.12, 0.72, 0.15, 1)';
+        reel.style.transform = `translateX(${targetX}px)`;
+      });
+
+      setTimeout(async ()=>{
+        state.spinning = false;
+        state.spinResult = winner;
+        const priceAtSpin = state.wheelPrice;
+        await placeWheelOrder(winner, priceAtSpin);
+        state.lastWheelOrderNo = state.myOrders[0] ? state.myOrders[0].id : null;
+        await loadWheelConfig();
+        render();
+      }, 4300);
+    });
+  }
+};
+
+(async function init(){
+  await runStorageDiagnostic();
+  if(storageAvailable()){ await loadCatalog(); }
+  state.loading = false;
+  render();
+})();
+</script>
+</body>
+</html>
